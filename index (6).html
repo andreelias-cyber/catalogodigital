@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CatálogoPRO — Crie sua loja online</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<style>
+:root{--ink:#0d0d0d;--paper:#faf8f4;--cream:#f2ede4;--accent:#e8440a;--muted:#7a7065;--border:#e0d8cc}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Instrument Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:rgba(250,248,244,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--ink);text-decoration:none}
+.logo span{color:var(--accent)}
+.hero{padding:140px 48px 60px;max-width:800px;margin:0 auto;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:24px}
+.badge span{width:7px;height:7px;background:var(--accent);border-radius:50%;display:inline-block}
+h1{font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,54px);font-weight:800;line-height:1.05;letter-spacing:-1.5px;margin-bottom:16px}
+h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:40px;max-width:540px;margin-left:auto;margin-right:auto}
+.steps{display:flex;gap:32px;justify-content:center;margin:40px 0;flex-wrap:wrap}
+.step{text-align:center;max-width:160px}
+.step-num{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--cream);line-height:1;margin-bottom:6px}
+.step h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px}
+.step p{font-size:12px;color:var(--muted);line-height:1.5}
+#upload-section{background:var(--ink);padding:70px 24px}
+.upload-inner{max-width:580px;margin:0 auto}
+.slabel{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f5a623;margin-bottom:8px}
+.stitle{font-family:'Syne',sans-serif;font-size:clamp(24px,3vw,36px);font-weight:800;letter-spacing:-1px;color:#fff;margin-bottom:28px}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:32px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:6px}
+.fg input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:11px 14px;border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.fg input::placeholder{color:rgba(255,255,255,.22)}
+.fg input:focus{border-color:#f5a623}
+.drop{border:2px dashed rgba(255,255,255,.18);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:16px}
+.drop:hover,.drop.over{border-color:#f5a623;background:rgba(245,166,35,.05)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop-icon{font-size:30px;margin-bottom:6px}
+.drop-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
+.drop-sub{font-size:11px;color:rgba(255,255,255,.3)}
+.drop-file{margin-top:6px;font-size:12px;color:#f5a623;font-weight:600;display:none}
+.prog-wrap{display:none;margin-bottom:14px}
+.prog-top{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.45);margin-bottom:5px}
+.prog-bar{height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:#f5a623;border-radius:4px;width:0%;transition:width .35s ease}
+.prog-detail{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px;text-align:center}
+.submit-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:9px;padding:14px;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s}
+.submit-btn:hover:not(:disabled){background:#ff5a1f}
+.submit-btn:disabled{opacity:.45;cursor:not-allowed}
+.err{display:none;background:rgba(232,68,10,.12);border:1px solid rgba(232,68,10,.3);border-radius:8px;padding:11px 14px;font-size:13px;color:#ff9070;margin-top:12px;white-space:pre-wrap;word-break:break-all}
+.result{display:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:24px;margin-top:20px;text-align:center}
+.result-icon{font-size:44px;margin-bottom:8px}
+.result h3{font-family:'Syne',sans-serif;font-size:19px;color:#fff;font-weight:800;margin-bottom:5px}
+.result p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px}
+.link-wrap{display:flex;gap:7px;align-items:stretch;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:3px 3px 3px 12px;margin-bottom:12px}
+#genLink{flex:1;background:none;border:none;color:#f5a623;font-size:12px;font-family:'Instrument Sans',sans-serif;outline:none;cursor:text;word-break:break-all}
+.copy-btn{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.copy-btn:hover{background:#ff5a1f}
+.open-btn{display:block;width:100%;background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:11px;font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s}
+.open-btn:hover{background:rgba(255,255,255,.12)}
+footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.footer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--ink);text-decoration:none}
+.footer-logo span{color:var(--accent)}
+@media(max-width:600px){nav{padding:14px 20px}.hero{padding:100px 20px 50px}#upload-section{padding:50px 14px}.card{padding:20px}.frow{grid-template-columns:1fr}footer{flex-direction:column;gap:8px;padding:18px;text-align:center}}
+</style>
+</head>
+<body>
+<nav><a href="#" class="logo">Catálogo<span>PRO</span></a></nav>
+
+<section class="hero">
+  <div class="badge"><span></span> IA Nativa · Sem Limites</div>
+  <h1>Do PDF ao <em>e-commerce</em> em minutos</h1>
+  <p>Envie seu catálogo em PDF. Nossa IA extrai cada produto com foto, código e preço e cria uma loja online profissional para seus clientes fazerem pedidos.</p>
+  <div class="steps">
+    <div class="step"><div class="step-num">01</div><h3>Envie o PDF</h3><p>Qualquer catálogo</p></div>
+    <div class="step"><div class="step-num">02</div><h3>IA processa</h3><p>Extrai produtos automaticamente</p></div>
+    <div class="step"><div class="step-num">03</div><h3>Compartilhe</h3><p>Loja pronta para pedidos</p></div>
+  </div>
+</section>
+
+<section id="upload-section">
+  <div class="upload-inner">
+    <div class="slabel">Criar loja</div>
+    <div class="stitle">Gere sua loja agora</div>
+    <div class="card">
+      <div class="frow">
+        <div class="fg"><label>Nome da loja *</label><input type="text" id="catName" placeholder="Ex: Catálogo Modenuti"></div>
+        <div class="fg"><label>Seu WhatsApp *</label><input type="tel" id="catWpp" placeholder="5516999999999"></div>
+      </div>
+      <div class="fg">
+        <label>Arquivo PDF *</label>
+        <div class="drop" id="dropZone">
+          <input type="file" id="pdfFile" accept="application/pdf,.pdf">
+          <div class="drop-icon">📄</div>
+          <div class="drop-title">Arraste o PDF ou clique para selecionar</div>
+          <div class="drop-sub">Máximo 30MB</div>
+          <div class="drop-file" id="dropFile"></div>
+        </div>
+      </div>
+      <div class="prog-wrap" id="progWrap">
+        <div class="prog-top"><span id="progLabel">Processando...</span><span id="progPct">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+        <div class="prog-detail" id="progDetail"></div>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">✦ Criar loja do catálogo</button>
+      <div class="err" id="errBox"></div>
+    </div>
+    <div class="result" id="resultBox">
+      <div class="result-icon">🎉</div>
+      <h3>Loja criada com sucesso!</h3>
+      <p id="resultDesc">Compartilhe o link com seus clientes</p>
+      <div class="link-wrap"><input type="text" id="genLink" readonly><button class="copy-btn" onclick="copyLink()">Copiar</button></div>
+      <a id="openBtn" class="open-btn" target="_blank">Abrir loja ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a href="#" class="footer-logo">Catálogo<span>PRO</span></a>
+  <span>Feito para vendedores brasileiros 🇧🇷</span>
+</footer>
+
+<script>
+var SUPABASE_URL      = 'https://jzparydgucxsqlofhcut.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_YD-57J7SDvla4vKPS45xCg_bNTGJTpu';
+var STORE_PAGE        = 'catalogo.html';
+var GEMINI_API_KEY    = 'AIzaSyAmwCdJ48RjE7VIqyn4xA-1sR1GE4LfXDc'; 
+
+var pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+var sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  function(e){e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave', function(){dz.classList.remove('over');});
+dz.addEventListener('drop', function(e){
+  e.preventDefault(); dz.classList.remove('over');
+  var f = e.dataTransfer.files[0];
+  if(f){ document.getElementById('pdfFile').files = e.dataTransfer.files; showFile(f.name); }
+});
+document.getElementById('pdfFile').addEventListener('change', function(e){
+  if(e.target.files[0]) showFile(e.target.files[0].name);
+});
+function showFile(n){
+  var el = document.getElementById('dropFile');
+  el.textContent = '✓ ' + n; el.style.display = 'block';
+}
+
+function setProgress(label, pct, detail){
+  document.getElementById('progWrap').style.display = 'block';
+  document.getElementById('progLabel').textContent  = label;
+  document.getElementById('progPct').textContent    = Math.round(pct) + '%';
+  document.getElementById('progFill').style.width   = pct + '%';
+  if(detail !== undefined) document.getElementById('progDetail').textContent = detail;
+}
+
+function showErr(msg){
+  var el = document.getElementById('errBox');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('progWrap').style.display = 'none';
+}
+
+function genSlug(){
+  return Math.random().toString(36).slice(2,8) + Math.random().toString(36).slice(2,5);
+}
+
+async function renderPage(pdf, pageNum, scale){
+  var page = await pdf.getPage(pageNum);
+  var vp   = page.getViewport({scale: scale});
+  var canvas = document.createElement('canvas');
+  canvas.width  = vp.width;
+  canvas.height = vp.height;
+  await page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise;
+  return {
+    canvas: canvas,
+    base64: canvas.toDataURL('image/jpeg', 0.88).split(',')[1],
+    width:  vp.width,
+    height: vp.height
+  };
+}
+
+function cropImage(canvas, x, y, w, h){
+  x = Math.max(0, Math.round(x));
+  y = Math.max(0, Math.round(y));
+  w = Math.min(canvas.width  - x, Math.round(w));
+  h = Math.min(canvas.height - y, Math.round(h));
+
+  if (w < 10 || h < 10) return null;
+
+  var padX = Math.round(w * 0.03);
+  var padY = Math.round(h * 0.03);
+  var sx   = Math.max(0, x - padX);
+  var sy   = Math.max(0, y - padY);
+  var sw   = Math.min(canvas.width  - sx, w + padX * 2);
+  var sh   = Math.min(canvas.height - sy, h + padY * 2);
+
+  var OUTPUT = 600;
+  var crop   = document.createElement('canvas');
+  crop.width  = OUTPUT;
+  crop.height = OUTPUT;
+  var ctx    = crop.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, OUTPUT, OUTPUT);
+
+  var fit   = 0.90;
+  var scale = Math.min((OUTPUT * fit) / sw, (OUTPUT * fit) / sh);
+  var dw    = Math.round(sw * scale);
+  var dh    = Math.round(sh * scale);
+  var dx    = Math.round((OUTPUT - dw) / 2);
+  var dy    = Math.round((OUTPUT - dh) / 2);
+
+  ctx.imageSmoothingEnabled  = true;
+  ctx.imageSmoothingQuality  = 'high';
+  ctx.drawImage(canvas, sx, sy, sw, sh, dx, dy, dw, dh);
+
+  return crop.toDataURL('image/jpeg', 0.93).split(',')[1];
+}
+
+async function callGeminiDirect(base64img){
+  var url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  
+  var prompt =
+    'You are an expert AI extracting product data from catalog pages. ' +
+    'Identify and extract ALL products visible on this page. ' +
+    'For each product photo, use NORMALIZED coordinates between 0.000 and 1.000. ' +
+    'Return a JSON object with this structure: ' +
+    '{"products": [{ ' +
+    '"code": "numeric code or null", ' +
+    '"barcode": "EAN or null", ' +
+    '"name": "product name", ' +
+    '"description": "specs or null", ' +
+    '"price": number or null, ' +
+    '"photo_ymin": float, ' +
+    '"photo_xmin": float, ' +
+    '"photo_ymax": float, ' +
+    '"photo_xmax": float ' +
+    '}]}';
+
+  var bodyPayload = {
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inlineData: { mimeType: "image/jpeg", data: base64img } }
+      ]
+    }],
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: "application/json"
+    }
+  };
+
+  var res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(bodyPayload)
+  });
+
+  if (!res.ok) {
+    var et = await res.text();
+    if (res.status === 429) {
+      throw new Error('QUOTA_LIMIT');
+    }
+    throw new Error('Gemini API Error: ' + et.slice(0,150));
+  }
+
+  var data = await res.json();
+  var text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+
+  var jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return [];
+
+  try {
+    var parsed = JSON.parse(jsonMatch[0]);
+    return parsed.products || [];
+  } catch(e) {
+    console.error('Falha ao parsear produtos da página:', e);
+    return [];
+  }
+}
+
+async function handleSubmit(){
+  var name = document.getElementById('catName').value.trim();
+  var wpp  = document.getElementById('catWpp').value.trim().replace(/\D/g,'');
+  var file = document.getElementById('pdfFile').files[0];
+
+  document.getElementById('errBox').style.display = 'none';
+  if(!name) return showErr('Informe o nome da loja.');
+  if(!wpp)  return showErr('Informe seu WhatsApp.');
+  if(!file) return showErr('Selecione um arquivo PDF.');
+  if(file.size > 31457280) return showErr('Arquivo muito grande (máximo 30MB).');
+
+  document.getElementById('submitBtn').disabled = true;
+  var slug = genSlug();
+
+  try {
+    // 1. Upload PDF para o Supabase Storage
+    setProgress('Enviando PDF...', 5, 'Conectando ao Supabase Storage...');
+    
+    var {data: upData, error: upErr} = await sb.storage.from('pdfs').upload(slug + '.pdf', file, {
+      contentType: 'application/pdf',
+      upsert: true
+    });
+    
+    if(upErr) {
+      throw new Error('Erro no Storage Supabase: ' + upErr.message);
+    }
+    
+    var publicUrlResult = sb.storage.from('pdfs').getPublicUrl(slug + '.pdf');
+    var publicUrl = publicUrlResult.data ? publicUrlResult.data.publicUrl : publicUrlResult;
+
+    // 2. Processar páginas localmente com o Gemini
+    var buf = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    var totalPages = pdf.numPages;
+    var allProducts = [];
+    var sortOrder   = 0;
+    var SCALE       = 2.2; 
+
+    for(var pn = 1; pn <= totalPages; pn++){
+      var pct = 10 + ((pn - 1) / totalPages) * 72;
+      setProgress('Gemini extraindo produtos...', pct, 'Processando página ' + pn + ' de ' + totalPages);
+
+      var sucesso = false;
+      var tentativas = 0;
+
+      while(!sucesso && tentativas < 5) {
+        try {
+          var pageData = await renderPage(pdf, pn, SCALE);
+          var products = await callGeminiDirect(pageData.base64);
+
+          console.log('Página ' + pn + ' encontrou ' + products.length + ' potenciais produtos.');
+
+          for(var pi = 0; pi < products.length; pi++){
+            var prod = products[pi];
+            if(!prod || !prod.name) continue;
+            sortOrder++;
+
+            var imageUrl = null;
+            
+            if(prod.photo_xmin != null && prod.photo_ymin != null && prod.photo_xmax != null && prod.photo_ymax != null){
+              var absX = prod.photo_xmin * pageData.width;
+              var absY = prod.photo_ymin * pageData.height;
+              var absW = (prod.photo_xmax - prod.photo_xmin) * pageData.width;
+              var absH = (prod.photo_ymax - prod.photo_ymin) * pageData.height;
+
+              if(absW > 20 && absH > 20){
+                try {
+                  var b64 = cropImage(pageData.canvas, absX, absY, absW, absH);
+                  if (b64) { 
+                    var blob = await (await fetch('data:image/jpeg;base64,' + b64)).blob();
+                    var fname = slug + '_' + sortOrder + '.jpg';
+                    var {error: ie} = await sb.storage.from('pdfs').upload(fname, blob, {contentType:'image/jpeg'});
+                    if(!ie){
+                      var iuResult = sb.storage.from('pdfs').getPublicUrl(fname);
+                      imageUrl = iuResult.data ? iuResult.data.publicUrl : iuResult;
+                    }
+                  }
+                } catch(ce){ console.warn(ce); }
+              }
+            }
+
+            allProducts.push({
+              catalog_slug: slug,
+              code:         prod.code        ? String(prod.code)    : null,
+              barcode:      prod.barcode     ? String(prod.barcode)  : null,
+              name:         prod.name,
+              description:  prod.description || null,
+              price:        prod.price != null ? Number(prod.price)  : null,
+              image_url:    imageUrl,
+              sort_order:   sortOrder
+            });
+          }
+          
+          sucesso = true;
+          // Pequena pausa estratégica para evitar bater no limite de RPM
+          await new Promise(r => setTimeout(r, 3500)); 
+
+        } catch(pe){
+          if(pe.message === 'QUOTA_LIMIT') {
+            tentativas++;
+            setProgress('Evitando limite de cota...', pct, 'Aguardando 15s para retomar (Tentativa ' + tentativas + '/5)...');
+            await new Promise(r => setTimeout(r, 15000)); 
+          } else {
+            console.error('Erro crítico na extração da página ' + pn + ':', pe.message);
+            // IMPORTANTE: Não marcamos como sucesso para tentar ler de novo a página se for falha de requisição comum
+            tentativas++;
+            if (tentativas >= 3) {
+              sucesso = true; // pula após 3 falhas seguidas na mesma página para não travar o loop eterno
+            }
+            await new Promise(r => setTimeout(r, 2000));
+          }
+        }
+      }
+    }
+
+    // 4. Salvar dados de forma HÍBRIDA para garantir compatibilidade com as duas versões do catalogo.html
+    setProgress('Finalizando catálogo...', 85, 'Gravando ' + allProducts.length + ' produtos no banco...');
+    
+    // Versão Antiga: Salva a lista de produtos diretamente na coluna da tabela 'catalogs'
+    var productsTextJson = JSON.stringify(allProducts);
+
+    var {error: catErr} = await sb.from('catalogs').insert({
+      slug: slug, 
+      name: name, 
+      whatsapp: wpp,
+      pdf_url: publicUrl,
+      products_json: productsTextJson, // Salva aqui para index antigos que puxam direto do catálogo
+      layout_json: '{}'
+    });
+    
+    if(catErr) {
+      throw new Error('Erro ao criar registro principal na tabela "catalogs": ' + catErr.message);
+    }
+
+    // Versão Nova: Salva os produtos linha por linha na tabela independente 'catalog_products'
+    if (allProducts.length > 0) {
+      setProgress('Sincronizando banco...', 92, 'Gravando linhas de produtos individuais...');
+      for(var i = 0; i < allProducts.length; i += 50){
+        var batch = allProducts.slice(i, i + 50);
+        var { error: prodTableErr} = await sb.from('catalog_products').insert(batch);
+        if (prodTableErr) {
+          console.warn('Nota: Não foi possível gravar na tabela isolada "catalog_products" (talvez ela não exista ou tenha RLS ativado):', prodTableErr.message);
+        }
+      }
+    }
+
+    // 5. Finalizado com sucesso
+    setProgress('Pronto!', 100, allProducts.length + ' produtos carregados com sucesso!');
+
+    var storeUrl = window.location.origin +
+                   window.location.pathname.replace('index.html','') +
+                   STORE_PAGE + '?id=' + slug;
+
+    document.getElementById('genLink').value   = storeUrl;
+    document.getElementById('openBtn').href    = storeUrl;
+    document.getElementById('resultDesc').textContent = allProducts.length + ' produtos extraídos com o Gemini!';
+    document.getElementById('resultBox').style.display = 'block';
+    document.getElementById('progWrap').style.display  = 'none';
+    document.getElementById('resultBox').scrollIntoView({behavior:'smooth', block:'center'});
+
+  } catch(err){
+    showErr(err.message);
+  }
+}
+
+function copyLink(){
+  var inp = document.getElementById('genLink');
+  inp.select(); inp.setSelectionRange(0,99999);
+  navigator.clipboard.writeText(inp.value);
+  var btn = document.querySelector('.copy-btn');
+  btn.textContent = '✓ Copiado!';
+  setTimeout(function(){ btn.textContent = 'Copiar'; }, 2000);
+}
+</script>
+</body>
+</html>
