@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CatálogoPRO — Crie sua loja online</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{--ink:#0d0d0d;--paper:#faf8f4;--cream:#f2ede4;--accent:#e8440a;--muted:#7a7065;--border:#e0d8cc}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Instrument Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:rgba(250,248,244,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--ink);text-decoration:none}
+.logo span{color:var(--accent)}
+.hero{padding:140px 48px 60px;max-width:800px;margin:0 auto;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:24px}
+.badge span{width:7px;height:7px;background:var(--accent);border-radius:50%;display:inline-block}
+h1{font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,54px);font-weight:800;line-height:1.05;letter-spacing:-1.5px;margin-bottom:16px}
+h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:40px;max-width:540px;margin-left:auto;margin-right:auto}
+.steps{display:flex;gap:32px;justify-content:center;margin:40px 0;flex-wrap:wrap}
+.step{text-align:center;max-width:160px}
+.step-num{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--cream);line-height:1;margin-bottom:6px}
+.step h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:4px}
+.step p{font-size:12px;color:var(--muted);line-height:1.5}
+#upload-section{background:var(--ink);padding:70px 24px}
+.upload-inner{max-width:580px;margin:0 auto}
+.slabel{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f5a623;margin-bottom:8px}
+.stitle{font-family:'Syne',sans-serif;font-size:clamp(24px,3vw,36px);font-weight:800;letter-spacing:-1px;color:#fff;margin-bottom:28px}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:32px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:6px}
+.fg input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#fff;padding:11px 14px;border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.fg input::placeholder{color:rgba(255,255,255,.22)}
+.fg input:focus{border-color:#f5a623}
+.drop{border:2px dashed rgba(255,255,255,.18);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:16px}
+.drop:hover,.drop.over{border-color:#f5a623;background:rgba(245,166,35,.05)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop-icon{font-size:30px;margin-bottom:6px}
+.drop-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
+.drop-sub{font-size:11px;color:rgba(255,255,255,.3)}
+.drop-file{margin-top:6px;font-size:12px;color:#f5a623;font-weight:600;display:none}
+.prog-wrap{display:none;margin-bottom:14px}
+.prog-top{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.45);margin-bottom:5px}
+.prog-bar{height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:#f5a623;border-radius:4px;width:0%;transition:width .35s ease}
+.prog-detail{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px;text-align:center}
+.submit-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:9px;padding:14px;font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s}
+.submit-btn:hover:not(:disabled){background:#ff5a1f}
+.submit-btn:disabled{opacity:.45;cursor:not-allowed}
+.err{display:none;background:rgba(232,68,10,.12);border:1px solid rgba(232,68,10,.3);border-radius:8px;padding:11px 14px;font-size:13px;color:#ff9070;margin-top:12px}
+.result{display:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:24px;margin-top:20px;text-align:center}
+.result-icon{font-size:44px;margin-bottom:8px}
+.result h3{font-family:'Syne',sans-serif;font-size:19px;color:#fff;font-weight:800;margin-bottom:5px}
+.result p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px}
+.link-wrap{display:flex;gap:7px;align-items:stretch;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:3px 3px 3px 12px;margin-bottom:12px}
+#genLink{flex:1;background:none;border:none;color:#f5a623;font-size:12px;font-family:'Instrument Sans',sans-serif;outline:none;cursor:text;word-break:break-all}
+.copy-btn{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.copy-btn:hover{background:#ff5a1f}
+.open-btn{display:block;width:100%;background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:11px;font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s}
+.open-btn:hover{background:rgba(255,255,255,.12)}
+footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.footer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--ink);text-decoration:none}
+.footer-logo span{color:var(--accent)}
+@media(max-width:600px){nav{padding:14px 20px}.hero{padding:100px 20px 50px}#upload-section{padding:50px 14px}.card{padding:20px}.frow{grid-template-columns:1fr}footer{flex-direction:column;gap:8px;padding:18px;text-align:center}}
+</style>
+</head>
+<body>
+<nav><a href="#" class="logo">Catálogo<span>PRO</span></a></nav>
+
+<section class="hero">
+  <div class="badge"><span></span> Extração direta · 100% gratuito</div>
+  <h1>Do PDF ao <em>e-commerce</em> em minutos</h1>
+  <p>Envie seu catálogo em PDF. O sistema extrai cada produto com foto original, código, descrição e preço automaticamente — sem perda de qualidade.</p>
+  <div class="steps">
+    <div class="step"><div class="step-num">01</div><h3>Envie o PDF</h3><p>Qualquer catálogo em grade</p></div>
+    <div class="step"><div class="step-num">02</div><h3>Extração automática</h3><p>Fotos, códigos e preços</p></div>
+    <div class="step"><div class="step-num">03</div><h3>Compartilhe</h3><p>Loja pronta para pedidos</p></div>
+  </div>
+</section>
+
+<section id="upload-section">
+  <div class="upload-inner">
+    <div class="slabel">Criar loja</div>
+    <div class="stitle">Gere sua loja agora</div>
+    <div class="card">
+      <div class="frow">
+        <div class="fg"><label>Nome da loja *</label><input type="text" id="catName" placeholder="Ex: Catálogo Modenuti"></div>
+        <div class="fg"><label>Seu WhatsApp *</label><input type="tel" id="catWpp" placeholder="5516999999999"></div>
+      </div>
+      <div class="fg">
+        <label>Arquivo PDF *</label>
+        <div class="drop" id="dropZone">
+          <input type="file" id="pdfFile" accept="application/pdf,.pdf">
+          <div class="drop-icon">📄</div>
+          <div class="drop-title">Arraste o PDF ou clique para selecionar</div>
+          <div class="drop-sub">Máximo 30MB</div>
+          <div class="drop-file" id="dropFile"></div>
+        </div>
+      </div>
+      <div class="prog-wrap" id="progWrap">
+        <div class="prog-top"><span id="progLabel">Processando...</span><span id="progPct">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+        <div class="prog-detail" id="progDetail"></div>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">✦ Criar loja do catálogo</button>
+      <div class="err" id="errBox"></div>
+    </div>
+    <div class="result" id="resultBox">
+      <div class="result-icon">🎉</div>
+      <h3>Loja criada com sucesso!</h3>
+      <p id="resultDesc">Compartilhe o link com seus clientes</p>
+      <div class="link-wrap"><input type="text" id="genLink" readonly><button class="copy-btn" onclick="copyLink()">Copiar</button></div>
+      <a id="openBtn" class="open-btn" target="_blank">Abrir loja ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a href="#" class="footer-logo">Catálogo<span>PRO</span></a>
+  <span>Feito para vendedores brasileiros 🇧🇷</span>
+</footer>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────
+var SUPABASE_URL      = 'https://jzparydgucxsqlofhcut.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_YD-57J7SDvla4vKPS45xCg_bNTGJTpu';
+var GROQ_FUNCTION     = '/.netlify/functions/api';
+var STORE_PAGE        = 'loja.html';
+// ───────────────────────────────────────────────────────────
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── UI helpers ──────────────────────────────────────────────
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  function(e){e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave', function(){dz.classList.remove('over');});
+dz.addEventListener('drop', function(e){
+  e.preventDefault(); dz.classList.remove('over');
+  var f = e.dataTransfer.files[0];
+  if(f){ document.getElementById('pdfFile').files = e.dataTransfer.files; showFile(f.name); }
+});
+document.getElementById('pdfFile').addEventListener('change', function(e){
+  if(e.target.files[0]) showFile(e.target.files[0].name);
+});
+function showFile(n){ var el=document.getElementById('dropFile'); el.textContent='✓ '+n; el.style.display='block'; }
+function setProgress(label, pct, detail){
+  document.getElementById('progWrap').style.display='block';
+  document.getElementById('progLabel').textContent=label;
+  document.getElementById('progPct').textContent=Math.round(pct)+'%';
+  document.getElementById('progFill').style.width=pct+'%';
+  if(detail!==undefined) document.getElementById('progDetail').textContent=detail;
+}
+function showErr(msg){
+  var el=document.getElementById('errBox'); el.textContent=msg; el.style.display='block';
+  document.getElementById('submitBtn').disabled=false;
+  document.getElementById('progWrap').style.display='none';
+}
+function genSlug(){ return Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,5); }
+
+// ── PDF TEXT EXTRACTION ─────────────────────────────────────
+// Extract product data purely from PDF text — no AI needed for grid catalogs!
+async function extractProductsFromText(page) {
+  var tc    = await page.getTextContent({includeMarkedContent: false});
+  var items = tc.items;
+
+  // Rebuild lines: group chars into tokens by proximity
+  var tokens = [];
+  var cur    = null;
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    var ch = it.str || '';
+    if (!ch.trim()) { if(cur){ tokens.push(cur); cur=null; } continue; }
+    var ix = it.transform[4];
+    var iy = it.transform[5];
+    var iw = it.width || 8;
+    if (!cur) {
+      cur = {text: ch, x0: ix, y: iy, x1: ix+iw};
+    } else if (Math.abs(iy - cur.y) < 3 && (ix - cur.x1) < 14) {
+      cur.text += ch; cur.x1 = ix+iw;
+    } else {
+      tokens.push(cur);
+      cur = {text: ch, x0: ix, y: iy, x1: ix+iw};
+    }
+  }
+  if (cur) tokens.push(cur);
+
+  // PDF height for coordinate conversion
+  var viewport = page.getViewport({scale:1});
+  var PDF_H    = viewport.height;
+
+  // Find product code tokens: 3-6 digits
+  var codeTokens = tokens.filter(function(t){
+    return /^\d{3,6}$/.test(t.text.trim());
+  });
+
+  if (codeTokens.length === 0) return [];
+
+  // For each code, find associated name, price, barcode from nearby tokens
+  var products = [];
+  var codeRe   = /^\d{3,6}$/;
+  var priceRe  = /^[\d]+,\d{2}$/;
+  var eanRe    = /^\d{8,13}$/;
+
+  codeTokens.forEach(function(ct) {
+    var code  = ct.text.trim();
+    var codeX = ct.x0;
+    var codeY = PDF_H - ct.y;  // convert to top-down
+
+    // Collect tokens in the same column (±60px x) and below code (within 120px y)
+    var colTokens = tokens.filter(function(t) {
+      var ty = PDF_H - t.y;
+      return Math.abs(t.x0 - codeX) < 65 &&
+             ty > codeY - 5 &&
+             ty < codeY + 130;
+    });
+
+    // ── NOME DO PRODUTO ──────────────────────────────────────
+    // Estimar a largura da célula do produto (catálogos em grade de 4 colunas ~130-160px)
+    // O nome começa à direita do código na mesma linha, e continua nas próximas linhas
+    // dentro da mesma célula (mesma faixa horizontal do código)
+    var CELL_W = 155; // largura aproximada de uma célula de produto
+
+    // Linha 1: tokens à direita do código na mesma linha Y (±8px)
+    var nameParts = tokens.filter(function(t) {
+      var ty = PDF_H - t.y;
+      return Math.abs(ty - codeY) < 8 &&
+             t.x0 > ct.x1 &&
+             t.x0 < codeX + CELL_W &&
+             !/^\d{4,6}$/.test(t.text.trim());
+    });
+
+    // Linha 2+: tokens na mesma faixa horizontal da célula, abaixo do código
+    // Limitar a 2 linhas extras (até ~30px abaixo) e excluir metadados
+    var descTokens = tokens.filter(function(t) {
+      var ty = PDF_H - t.y;
+      return t.x0 >= codeX - 5 &&
+             t.x0 < codeX + CELL_W &&
+             ty > codeY + 6 &&
+             ty < codeY + 32 &&
+             !/^(QDE|EAN|NCM|DUN|R\$|nadir|NADIR|MIMO|ATLAS|WHEATON|OXFORD)/.test(t.text.trim()) &&
+             !/^\d{7,}$/.test(t.text.trim()) &&
+             !/^\d{3,6}$/.test(t.text.trim());
+    });
+
+    var nameStr = nameParts.map(function(t){ return t.text; }).join(' ').trim();
+    var descStr = descTokens.map(function(t){ return t.text; }).join(' ').replace(/\s+/g,' ').trim();
+    // Juntar e limpar: remover códigos internos em parênteses e marcas finais
+    nameStr = (nameStr + ' ' + descStr)
+      .replace(/\(\d{7,}\)/g,'')       // remove (6C050021200002N) etc
+      .replace(/\s*-\s*(NADIR|WHEATON|OXFORD|MIMO|ATLAS|EM CASA TEM|ETILUX|ORIGINAL LINE|PLASUTIL|SENALANDIA)\s*$/i,'')
+      .replace(/\s+/g,' ')
+      .trim();
+    if (nameStr.length < 3) return;
+
+    // ── PREÇO ────────────────────────────────────────────────
+    // Análise do PDF real (Modenuti): o preço (ex: "36,71") aparece sempre
+    // aproximadamente +43px abaixo do código em Y, e dentro de ±130px em X.
+    // Estratégia: achar o token de preço (formato "N,NN" ou "NN,NN" ou "NNN,NN")
+    // mais próximo do código dentro de uma janela razoável, sem cruzar para
+    // a célula de outro produto (limitar X à mesma célula).
+    var price = null;
+    var priceFound = tokens.filter(function(t) {
+      var ty = PDF_H - t.y;
+      return t.x0 >= codeX - 5 &&           // não sair muito à esquerda do código
+             t.x0 < codeX + CELL_W &&       // não ultrapassar a próxima célula
+             ty > codeY + 25 &&             // abaixo do código (após o nome)
+             ty < codeY + 80 &&             // mas não muito longe
+             priceRe.test(t.text.trim());
+    });
+
+    if (priceFound.length > 0) {
+      // Preferir o token mais próximo verticalmente do código (Δy ≈ 43px neste catálogo)
+      priceFound.sort(function(a, b) {
+        var da = Math.abs((PDF_H - a.y) - (codeY + 43));
+        var db = Math.abs((PDF_H - b.y) - (codeY + 43));
+        return da - db;
+      });
+      price = parseFloat(priceFound[0].text.trim().replace(',','.'));
+    }
+
+    // Fallback: se não achou na célula, buscar o "R$" mais próximo do código
+    // em toda a página e pegar o valor que vem logo depois
+    if (price === null) {
+      var rsTokens = tokens.filter(function(t) {
+        return t.text.trim() === 'R$';
+      });
+      var bestRs = null, bestDist = 9999;
+      rsTokens.forEach(function(rs) {
+        var ty = PDF_H - rs.y;
+        var dist = Math.abs(rs.x0 - codeX) + Math.abs(ty - codeY);
+        if (dist < bestDist && dist < 250) { bestDist = dist; bestRs = rs; }
+      });
+      if (bestRs) {
+        // O valor vem logo à direita do R$ na mesma linha
+        var rsY = PDF_H - bestRs.y;
+        var valTok = tokens.filter(function(t) {
+          var ty = PDF_H - t.y;
+          return Math.abs(ty - rsY) < 4 &&
+                 t.x0 > bestRs.x1 &&
+                 t.x0 < bestRs.x1 + 80 &&
+                 priceRe.test(t.text.trim());
+        });
+        if (valTok.length > 0) {
+          price = parseFloat(valTok[0].text.trim().replace(',','.'));
+        }
+      }
+    }
+
+    // Find EAN barcode
+    var barcode = null;
+    var eanFound = tokens.filter(function(t) {
+      var ty = PDF_H - t.y;
+      return Math.abs(t.x0 - codeX) < 65 &&
+             ty > codeY + 20 && ty < codeY + 130 &&
+             eanRe.test(t.text.trim());
+    });
+    if (eanFound.length > 0) barcode = eanFound[0].text.trim();
+
+    products.push({
+      code:    code,
+      name:    nameStr.slice(0, 120),
+      price:   price,
+      barcode: barcode,
+      // Store position for image matching
+      _x: codeX,
+      _y: codeY
+    });
+  });
+
+  return products;
+}
+
+// ── IMAGE EXTRACTION ────────────────────────────────────────
+// Extract embedded images directly from PDF page using PDF.js operator list
+async function extractPageImages(page, scale) {
+  var vp     = page.getViewport({scale: scale});
+  var opList = await page.getOperatorList();
+  var fnArr  = opList.fnArray;
+  var argsArr = opList.argsArray;
+
+  // PDF.js OPS codes for images
+  var OPS = pdfjsLib.OPS;
+  var imgObjects = {};
+
+  // First pass: collect image objects
+  for (var i = 0; i < fnArr.length; i++) {
+    if (fnArr[i] === OPS.paintImageXObject || fnArr[i] === OPS.paintImageXObjectRepeat) {
+      var imgName = argsArr[i][0];
+      imgObjects[imgName] = true;
+    }
+  }
+
+  // Get common objects (image data)
+  var commonObjs = page.commonObjs;
+  var objs       = page.objs;
+
+  var images = [];
+
+  // Render page to canvas first
+  var canvas = document.createElement('canvas');
+  canvas.width  = vp.width;
+  canvas.height = vp.height;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  await page.render({canvasContext: ctx, viewport: vp}).promise;
+
+  // Parse the operator list to find image positions and sizes
+  var currentMatrix = [1, 0, 0, 1, 0, 0];
+  var matrixStack   = [];
+
+  for (var i = 0; i < fnArr.length; i++) {
+    var fn   = fnArr[i];
+    var args = argsArr[i];
+
+    if (fn === OPS.save) {
+      matrixStack.push(currentMatrix.slice());
+    } else if (fn === OPS.restore) {
+      if (matrixStack.length > 0) currentMatrix = matrixStack.pop();
+    } else if (fn === OPS.transform) {
+      // Multiply current matrix with new transform
+      var m = args;
+      var cm = currentMatrix;
+      currentMatrix = [
+        cm[0]*m[0] + cm[2]*m[1],
+        cm[1]*m[0] + cm[3]*m[1],
+        cm[0]*m[2] + cm[2]*m[3],
+        cm[1]*m[2] + cm[3]*m[3],
+        cm[0]*m[4] + cm[2]*m[5] + cm[4],
+        cm[1]*m[4] + cm[3]*m[5] + cm[5]
+      ];
+    } else if (fn === OPS.paintImageXObject || fn === OPS.paintImageXObjectRepeat) {
+      var imgName = args[0];
+
+      // The image is drawn in a 1x1 unit square transformed by currentMatrix
+      // Bottom-left corner in PDF coords (origin bottom-left)
+      var pdfX = currentMatrix[4];
+      var pdfY = currentMatrix[5];
+      var pdfW = Math.abs(currentMatrix[0]);
+      var pdfH = Math.abs(currentMatrix[3]);
+
+      // Skip tiny icons
+      if (pdfW < 30 || pdfH < 30) continue;
+
+      // Convert to canvas coords (scale + flip Y)
+      var PDF_H_pts = vp.height / scale;
+      var canvasX = pdfX * scale;
+      var canvasY = (PDF_H_pts - pdfY - pdfH) * scale;
+      var canvasW = pdfW * scale;
+      var canvasH = pdfH * scale;
+
+      // Validate bounds
+      if (canvasX < 0 || canvasY < 0) continue;
+      if (canvasW < 20 || canvasH < 20) continue;
+      if (canvasX + canvasW > canvas.width + 10) continue;
+
+      images.push({
+        x:  Math.round(canvasX),
+        y:  Math.round(canvasY),
+        w:  Math.round(canvasW),
+        h:  Math.round(canvasH),
+        // PDF position for matching with product codes
+        pdfX: Math.round(pdfX),
+        pdfY: Math.round(PDF_H_pts - pdfY - pdfH)  // top-down
+      });
+    }
+  }
+
+  // Remove duplicate positions (same image rendered multiple times)
+  var seen  = {};
+  var unique = images.filter(function(img) {
+    var key = img.pdfX + '_' + img.pdfY;
+    if (seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+
+  return { canvas: canvas, images: unique };
+}
+
+// ── CROP IMAGE from canvas ──────────────────────────────────
+function cropToBase64(canvas, x, y, w, h) {
+  // Validate
+  x = Math.max(0, x);
+  y = Math.max(0, y);
+  w = Math.min(canvas.width  - x, w);
+  h = Math.min(canvas.height - y, h);
+  if (w < 10 || h < 10) return null;
+
+  var OUTPUT = 600;
+  var out    = document.createElement('canvas');
+  out.width  = OUTPUT;
+  out.height = OUTPUT;
+  var ctx    = out.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, OUTPUT, OUTPUT);
+
+  var fit   = 0.88;
+  var scale = Math.min((OUTPUT * fit) / w, (OUTPUT * fit) / h);
+  var dw    = Math.round(w * scale);
+  var dh    = Math.round(h * scale);
+  var dx    = Math.round((OUTPUT - dw) / 2);
+  var dy    = Math.round((OUTPUT - dh) / 2);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(canvas, x, y, w, h, dx, dy, dw, dh);
+
+  return out.toDataURL('image/jpeg', 0.93).split(',')[1];
+}
+
+// ── MATCH IMAGES TO PRODUCTS ────────────────────────────────
+function matchImagesToProducts(products, images) {
+  // Sort products by position (top-to-bottom, left-to-right)
+  var sortedProds = products.slice().sort(function(a, b) {
+    var rowA = Math.round(a._y / 60);
+    var rowB = Math.round(b._y / 60);
+    if (rowA !== rowB) return rowA - rowB;
+    return a._x - b._x;
+  });
+
+  // Sort images by position (top-to-bottom, left-to-right)
+  var sortedImgs = images.slice().sort(function(a, b) {
+    var rowA = Math.round(a.pdfY / 60);
+    var rowB = Math.round(b.pdfY / 60);
+    if (rowA !== rowB) return rowA - rowB;
+    return a.pdfX - b.pdfX;
+  });
+
+  // Assign images to products by index (both sorted same way)
+  sortedProds.forEach(function(prod, idx) {
+    prod._img = sortedImgs[idx] || null;
+  });
+
+  return sortedProds;
+}
+
+// ── MAIN PROCESS ────────────────────────────────────────────
+async function handleSubmit() {
+  var name = document.getElementById('catName').value.trim();
+  var wpp  = document.getElementById('catWpp').value.trim().replace(/\D/g,'');
+  var file = document.getElementById('pdfFile').files[0];
+
+  document.getElementById('errBox').style.display = 'none';
+  if (!name) return showErr('Informe o nome da loja.');
+  if (!wpp)  return showErr('Informe seu WhatsApp (ex: 5516999999999).');
+  if (!file) return showErr('Selecione um arquivo PDF.');
+  if (file.size > 31457280) return showErr('Arquivo muito grande (máximo 30MB).');
+
+  document.getElementById('submitBtn').disabled = true;
+  var slug = genSlug();
+
+  try {
+    // 1. Upload PDF
+    setProgress('Enviando PDF...', 5, '');
+    var {error: upErr} = await sb.storage.from('pdfs').upload(slug+'.pdf', file, {contentType:'application/pdf'});
+    if (upErr) throw new Error('Upload: ' + upErr.message);
+    var {data: urlData} = sb.storage.from('pdfs').getPublicUrl(slug+'.pdf');
+
+    // 2. Save catalog
+    setProgress('Criando loja...', 10, '');
+    var {error: catErr} = await sb.from('catalogs').insert({
+      slug: slug, name: name, whatsapp: wpp,
+      pdf_url: urlData.publicUrl,
+      products_json: '[]', layout_json: '{}'
+    });
+    if (catErr) throw new Error('Salvar catálogo: ' + catErr.message);
+
+    // 3. Load PDF
+    setProgress('Lendo PDF...', 12, '');
+    var buf        = await file.arrayBuffer();
+    var pdf        = await pdfjsLib.getDocument({data: buf}).promise;
+    var totalPages = pdf.numPages;
+    var allProducts = [];
+    var sortOrder   = 0;
+    var SCALE       = 2.0;
+
+    // 4. Process each page
+    for (var pn = 1; pn <= totalPages; pn++) {
+      var pct = 12 + ((pn-1) / totalPages) * 72;
+      setProgress('Extraindo produtos...', pct, 'Página ' + pn + ' de ' + totalPages);
+
+      try {
+        var page = await pdf.getPage(pn);
+
+        // Extract text-based product data (no AI!)
+        var products = await extractProductsFromText(page);
+        if (products.length === 0) continue;
+
+        // Extract images from page
+        var pageImgData = await extractPageImages(page, SCALE);
+
+        // Match images to products
+        var matched = matchImagesToProducts(products, pageImgData.images);
+
+        console.log('Page ' + pn + ': ' + products.length + ' products, ' + pageImgData.images.length + ' images');
+
+        // Process each matched product
+        for (var pi = 0; pi < matched.length; pi++) {
+          var prod = matched[pi];
+          sortOrder++;
+          var imageUrl = null;
+
+          // Crop and upload product image
+          if (prod._img) {
+            var b64 = cropToBase64(
+              pageImgData.canvas,
+              prod._img.x, prod._img.y,
+              prod._img.w, prod._img.h
+            );
+            if (b64) {
+              try {
+                var blob  = await (await fetch('data:image/jpeg;base64,'+b64)).blob();
+                var fname = slug + '_' + sortOrder + '.jpg';
+                var {error: ie} = await sb.storage.from('pdfs').upload(fname, blob, {contentType:'image/jpeg'});
+                if (!ie) {
+                  var {data: iu} = sb.storage.from('pdfs').getPublicUrl(fname);
+                  imageUrl = iu.publicUrl;
+                }
+              } catch(ce) { console.warn('Image upload err:', ce.message); }
+            }
+          }
+
+          allProducts.push({
+            catalog_slug: slug,
+            code:         prod.code || null,
+            barcode:      prod.barcode || null,
+            name:         prod.name,
+            description:  null,
+            price:        prod.price,
+            image_url:    imageUrl,
+            sort_order:   sortOrder
+          });
+        }
+
+      } catch(pe) {
+        console.warn('Page ' + pn + ' failed:', pe.message);
+      }
+    }
+
+    // 5. Save products to DB
+    setProgress('Salvando produtos...', 87, allProducts.length + ' produtos encontrados');
+    for (var i = 0; i < allProducts.length; i += 50) {
+      var batch = allProducts.slice(i, i+50);
+      var {error: pe} = await sb.from('catalog_products').insert(batch);
+      if (pe) console.warn('Insert error:', pe.message);
+    }
+
+    // 6. Done!
+    setProgress('Pronto!', 100, allProducts.length + ' produtos extraídos com sucesso!');
+
+    var storeUrl = window.location.origin +
+                   window.location.pathname.replace('index.html','') +
+                   STORE_PAGE + '?id=' + slug;
+
+    document.getElementById('genLink').value  = storeUrl;
+    document.getElementById('openBtn').href   = storeUrl;
+    document.getElementById('resultDesc').textContent =
+      allProducts.length + ' produtos extraídos · Compartilhe com seus clientes';
+    document.getElementById('resultBox').style.display = 'block';
+    document.getElementById('progWrap').style.display  = 'none';
+    document.getElementById('resultBox').scrollIntoView({behavior:'smooth', block:'center'});
+
+  } catch(err) {
+    showErr('Erro: ' + err.message);
+  }
+}
+
+function copyLink() {
+  var inp = document.getElementById('genLink');
+  inp.select(); inp.setSelectionRange(0,99999);
+  navigator.clipboard.writeText(inp.value).catch(function(){ document.execCommand('copy'); });
+  var btn = document.querySelector('.copy-btn');
+  btn.textContent = '✓ Copiado!';
+  setTimeout(function(){ btn.textContent = 'Copiar'; }, 2000);
+}
+</script>
+</body>
+</html>
